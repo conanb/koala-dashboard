@@ -5,18 +5,29 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KOALA Dashboard</title>
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="style2.css">
     <link rel='stylesheet' type="text/css" href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.css'>
 </head>
 <body>
     <div class="full" id="map-container">
+        <div id="control-panel">
+            <div>
+            <label>Radius</label>
+            <input id="radius" type="range" min="10" max="1000" step="5" value="100"></input>
+            <span id="radius-value"></span>
+            </div>
+            <div>
+            <label>Coverage</label>
+            <input id="coverage" type="range" min="0" max="1" step="0.1" value="1"></input>
+            <span id="coverage-value"></span>
+            </div>
+        </div>
         <!--<div class="left"></div>-->
         <!--<div class="right"></div>-->
     </div>
 
     <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.53.0/mapbox-gl.js'></script>
-    <script src='perlin.js'></script>
-    <script src="deck.js"></script>
+    <script src="deck2.js"></script>
 </body>
 </html>

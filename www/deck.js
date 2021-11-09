@@ -20,7 +20,7 @@ const PM2_RANGE = [
   { name: 'Good', range: 16.4, color: [128, 255, 255] },
   { name: 'Fair', range: 25, color: [255, 255, 128] },
   { name: 'Poor', range: 37.4, color: [255, 128, 0] },
-  { name: 'Very Poor', range: 37.5, color: [0, 0, 0] }
+  { name: 'Very Poor', range: 100, color: [0, 0, 0] }
 ];
 
 const PM25_COLOURS = [ 
@@ -43,40 +43,44 @@ const COLOR_RANGE = [
   [209, 55, 78]
 ];
 
-console.log(GetJSON('http://localhost:8000/buspositions'));
+const DATA_URL = 'http://localhost:8000/buspositions';
+
+let newData = false;
+
+var scatterLayer =  new ScatterplotLayer({
+  data: GetJSON(DATA_URL),
+  radiusScale: 5,
+  radiusMinPixels: 2,
+  colorRange: PM25_COLOURS,
+  getColorWeight: d => d.pm25,
+  getPosition: d =>  [d.position.longitude, d.position.latitude, 0],// [d.vehicle.position.longitude, d.vehicle.position.latitude, 0],
+  pickable: true/*,
+  transitions: {
+    getPosition: 2000
+  }*/
+});
 
 /** DeckGL **/
-new DeckGL({
-  mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+const busDeck = new DeckGL({
+    mapStyle: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+ //   mapStyle: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
   initialViewState: INITIAL_VIEW_STATE,
   controller: true,
-  getTooltip: ({object}) => object && (object.name || object.locationstring || object.groupname),
+  getTooltip: ({object}) => object && {
+    html: `<h5>Route: ${object.route}</h5>
+    <div>PM2.5: ${object.pm25}</div>
+    <div>Longitude: ${object.position.longitude}</div>
+    <div>Latitude: ${object.position.latitude}</div>`,
+  },
   container: 'map-container',
-  layers: [
-    new ScatterplotLayer({
-      id: 'bus-scatter',
-      data: GetJSON('http://localhost:8000/buspositions'),//https://raw.githubusercontent.com/conanb/datasets/main/busstops.json',
-      radiusScale: 10,
-      radiusMinPixels: 5,
-      getPosition: d => [d.vehicle.position.longitude, d.vehicle.position.latitude, 0],//[d.latitude, d.longitude, 0],
-      getFillColor: [0,0,0],
-      getLineColor: [0,0,0],
-      pickable: true,
-      autoHighlight: true
-    })/*,
-
-
+  layers: [ scatterLayer
+   /*,
     new HeatmapLayer({
       id: 'heatmapLayer',
-      data: 'https://raw.githubusercontent.com/conanb/datasets/main/busstops.json',
-      getPosition: d => [d.latitude, d.longitude, 0],
-      getWeight: d => d.pm25 / 50.0,
-  //    getWeightValue: getMax,
- //     getColorWeight: d => d.pm25 / 50.0,
-  //    aggregation: 'MEAN',
-     colorRange: COLOR_RANGE,//PM25_COLOURS,
-      radiusPixels: 100
-    }),
+      data: 'http://localhost:8000/buspositions',
+      getPosition: d => [d.vehicle.position.longitude, d.vehicle.position.latitude, 0],
+      getWeight: d => 1.0
+    })/*,
 
     new HexagonLayer({
       id: 'heatmap',
@@ -94,37 +98,24 @@ new DeckGL({
    //   getElevationValue: getMax,
       getColorWeight: d => d.pm25 / 50.0,
       opacity: 1
-    }),
-
-    new ScatterplotLayer({      
-      id: 'scatter-plot',
-      data: GetJSON('http://dashboard.sensors.net.au/api/qld'),
-      radiusScale: 20,
-      radiusMinPixels: 20,
-      getPosition: d => [d.Longitude, d.Latitude, 0],
-      getColor: 
-      d => (d.pm25 < PM2_RANGE[0].range ? PM2_RANGE[0].color : 
-            (d.pm25 < PM2_RANGE[1].range ? PM2_RANGE[1].color : 
-              (d.pm25 < PM2_RANGE[2].range ? PM2_RANGE[2].color : 
-                (d.pm25 < PM2_RANGE[3].range ? PM2_RANGE[3].color : 
-                  (d.pm25 < PM2_RANGE[4].range ? PM2_RANGE[4].color : [128,128,128]))))),
-      pickable: true
-    }),
-
-    
-    new ScatterplotLayer({      
-      id: 'scatter-plot',
-      data: GetJSON('http://dashboard.sensors.net.au/api/projects/Adelaide?_=1621405032059'),
-      radiusScale: 20,
-      radiusMinPixels: 20,
-      getPosition: d => [d.Longitude, d.Latitude, 0],
-      getColor: 
-      d => (d.pm25 < PM2_RANGE[0].range ? PM2_RANGE[0].color : 
-            (d.pm25 < PM2_RANGE[1].range ? PM2_RANGE[1].color : 
-              (d.pm25 < PM2_RANGE[2].range ? PM2_RANGE[2].color : 
-                (d.pm25 < PM2_RANGE[3].range ? PM2_RANGE[3].color : 
-                  (d.pm25 < PM2_RANGE[4].range ? PM2_RANGE[4].color : [128,128,128]))))),
-      pickable: true
     })*/
   ]
 });
+
+setInterval(() => {
+  scatterLayer =  new ScatterplotLayer({
+    data: GetJSON(DATA_URL),
+    radiusScale: 5,
+    radiusMinPixels: 5,
+    colorRange: PM25_COLOURS,
+    getColorWeight: d => d.pm25,
+    getPosition: d => [d.position.longitude, d.position.latitude, 0],
+    pickable: true/*,
+    transitions: {
+      getPosition: 2000
+    }*/
+  });
+
+  busDeck.setProps({layers: [scatterLayer]});
+ // console.log('Updating data');
+}, 10 * 1000);
